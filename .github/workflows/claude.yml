@@ -40,6 +40,27 @@ jobs:
           additional_permissions: |
             actions: read
 
+         
+          # 🧠 Custom Instructions (Step 1)
+          custom_instructions: |
+            The project is already set up.
+            Use clean code and best practices.
+            If needed, run npm commands.
+
+          # 🤖 MCP (Playwright)
+          mcp_config: |
+            {
+              "mcpServers": {
+                "playwright": {
+                  "command": "npx",
+                  "args": ["@playwright/mcp@latest"]
+                }
+              }
+            }
+
+          # 🔐 Tool Permissions
+          allowed_tools: "Bash(npm:*),mcp__playwright__browser_click,mcp__playwright__browser_snapshot" 
+          
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
