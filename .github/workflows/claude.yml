@@ -1,8 +1,5 @@
 name: Claude Code
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   issue_comment:
     types: [created]
@@ -15,13 +12,16 @@ on:
 
 jobs:
   claude:
+    runs-on: ubuntu-latest
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
-
-    runs-on: ubuntu-latest
 
     permissions:
       contents: read
@@ -31,13 +31,13 @@ jobs:
       actions: read
 
     steps:
-      # 📦 1. تحميل المشروع
+      # 📦 تحميل المشروع
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
-      # ⚙️ 2. تجهيز المشروع (ذكي وآمن)
+      # ⚙️ تجهيز المشروع (ذكي)
       - name: Project Setup
         run: |
           if [ -f package.json ]; then
@@ -45,10 +45,17 @@ jobs:
             npm install || true
             npm run dev & sleep 10 || true
           else
-            echo "No Node.js project detected, skipping setup"
+            echo "No package.json in root"
+            echo "Trying subfolders..."
+
+            if [ -f frontend/package.json ]; then
+              cd frontend
+              npm install || true
+              npm run dev & sleep 10 || true
+            fi
           fi
 
-      # 🤖 3. تشغيل Claude
+      # 🤖 تشغيل Claude
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -58,26 +65,20 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # 🧠 تعليمات المشروع
           custom_instructions: |
             The project is already set up.
             If a dev server exists, it may run on localhost:3000.
             Use clean code and best practices.
-            If needed, run npm or node commands.
-            Focus on analyzing the repository if no server is running.
-            You can analyze the UI using Playwright.
+            Analyze the repository even if no server is running.
 
-          # 🤖 MCP (Playwright)
           mcp_config: |
             {
               "mcpServers": {
                 "playwright": {
                   "command": "npx",
-                  "args": ["@playwright/mcp@latest"],
-                  "env": {}
+                  "args": ["@playwright/mcp@latest"]
                 }
               }
             }
 
-          # 🔐 الصلاحيات (مهم جدًا)
           allowed_tools: "Bash(npm:*),Bash(node:*),Bash(npx:*),mcp__playwright__browser_snapshot,mcp__playwright__browser_click"
