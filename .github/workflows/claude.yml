@@ -34,14 +34,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      # ⚙️ 2. تجهيز المشروع (آمن حتى لو لا يوجد package.json)
+      # ⚙️ 2. تجهيز المشروع (ذكي وآمن)
       - name: Project Setup
         run: |
           if [ -f package.json ]; then
-            npm install
-            npm run dev & sleep 10
+            echo "Node.js project detected"
+            npm install || true
+            npm run dev & sleep 10 || true
           else
-            echo "No Node.js project detected"
+            echo "No Node.js project detected, skipping setup"
           fi
 
       # 🤖 3. تشغيل Claude
@@ -60,6 +61,7 @@ jobs:
             If a dev server exists, it may run on localhost:3000.
             Use clean code and best practices.
             If needed, run npm or node commands.
+            Focus on analyzing the repository if no server is running.
             You can analyze the UI using Playwright.
 
           # 🤖 MCP (Playwright)
